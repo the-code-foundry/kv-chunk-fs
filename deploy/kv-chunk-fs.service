@@ -1,0 +1,37 @@
+# kv-chunk-fs: /srv/kv/cache is the mount, /srv/kv-cache.backing holds tree/
+# (stubs and plain files), store/ (chunks) and staging/. Containers bind the
+# plain parent /srv/kv (propagation rslave): a bind of the mount itself would
+# keep the dead mount after a restart of this service, while a mount made under
+# a bound directory propagates into it.
+# Installed by deploy/install.sh, which fills in the user and the paths.
+# Health: head -1 /srv/kv/cache/status
+[Unit]
+Description=kv-chunk-fs: deduplicating FUSE filesystem for KV-cache snapshots
+After=local-fs.target
+# llama-swap starts the model containers that use the mount (see the drop-in)
+Before=llama-swap.service
+
+[Service]
+# READY=1 once the mount is up, after the startup garbage collection / recovery
+Type=notify
+NotifyAccess=main
+User=llama
+Group=llama
+# settings (backing, mount, API, ...): /etc/kv-chunk-fs.env, installed by install.sh
+EnvironmentFile=/etc/kv-chunk-fs.env
+# /run/kv-chunk-fs for the API socket, owned by the service user
+RuntimeDirectory=kv-chunk-fs
+RuntimeDirectoryMode=0750
+ExecStart=/opt/kv-chunk-fs/kv-chunk-fs mount
+# if the process dies, or stopping finds the mount busy, detach it anyway
+ExecStopPost=-/usr/bin/fusermount3 -uz /srv/kv/cache
+Restart=on-failure
+RestartSec=5
+# recovery at start reads every index and lists the store
+TimeoutStartSec=300
+TimeoutStopSec=60
+# No PrivateTmp/ProtectSystem/... here: those give the service its own mount
+# namespace, and the mount would then be invisible to everything else.
+
+[Install]
+WantedBy=multi-user.target

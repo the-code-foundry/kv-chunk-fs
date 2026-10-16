@@ -1,0 +1,26 @@
+local/
+
+# build.sh's Go module and build caches
+.go-cache/
+
+# build output: build.sh writes bin/kv-chunk-fs; a plain `go build ./cmd/kv-chunk-fs`
+# drops the binary in the current directory instead
+bin/
+/kv-chunk-fs
+/cmd/kv-chunk-fs/kv-chunk-fs
+
+# compiled test binaries (`go test -c`, or left behind by -cpuprofile/-memprofile)
+*.test
+
+# profiles and coverage
+*.out
+*.prof
+*.pprof
+cover.html
+coverage.html
+
+# other compiled Go artifacts
+*.exe
+*.o
+*.a
+*.so

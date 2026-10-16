@@ -1,0 +1,29 @@
+# Example only (the host service is the simpler choice). kv-chunk-fs in a
+# container, with the mount propagated to the host and from there into the
+# model containers.
+services:
+  kv-chunk-fs:
+    image: kv-chunk-fs:latest
+    restart: unless-stopped
+    user: "1000:1000"             # owns the backing files; must match the model containers
+    devices:
+      - /dev/fuse
+    cap_add:
+      - SYS_ADMIN                 # mounting
+    security_opt:
+      - apparmor:unconfined       # Docker's default AppArmor profile forbids mount
+    volumes:
+      # the mount is made at /kv/cache inside this container; rshared carries it
+      # out to the host's /srv/kv/cache (the host side of /srv/kv must be a shared
+      # mount: `findmnt -o TARGET,PROPAGATION /srv`; systemd makes / shared)
+      - type: bind
+        source: /srv/kv
+        target: /kv
+        bind: { propagation: rshared }
+      - /srv/kv-cache.backing:/backing
+    # stop gracefully so the mount is released; the model containers bind
+    # /srv/kv with propagation rslave and see a new mount after a restart
+
+# The model containers stay as they are (bind /srv/kv -> /kv, rslave). Start this
+# one first: with llama-swap starting the models on demand that is the case
+# whenever this container has restart: unless-stopped and starts with Docker.

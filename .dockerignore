@@ -1,0 +1,7 @@
+bin/
+.git/
+local/
+*.test
+*.out
+*.prof
+_plans/

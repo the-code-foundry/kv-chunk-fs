@@ -1,5 +1,7 @@
 # kv-chunk-fs
 
+![A KV snapshot is split into content-addressed chunks; the chunk store keeps each chunk once, and many snapshots reuse it: write once, reuse many.](docs/img/kv-chunk-fs.jpg)
+
 A deduplicating FUSE filesystem for llama.cpp KV-cache snapshots. To llama-server and a
 KV-cache proxy such as
 [local-llm-kv-cache](https://github.com/the-code-foundry/local-llm-kv-cache) it is an

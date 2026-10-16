@@ -23,6 +23,8 @@ the files looking ordinary: rename, unlink, `utimens`, `find` and `rm` all behav
 
 ## Quick start
 
+Linux only (kernel FUSE, xattrs, systemd; see [docs/install.md](docs/install.md)).
+
 ```sh
 ./build.sh            # vet, unit tests, static build in the golang Docker container
 sudo deploy/install.sh

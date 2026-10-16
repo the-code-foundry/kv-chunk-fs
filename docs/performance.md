@@ -65,3 +65,22 @@ proxy that saves while holding its lock makes a follow-up wait that long — up 
 `kv-save-growth` (skip a save until the conversation has grown by N tokens) and its
 terminal save policy. Snapshots also grow ~0.2 GB per turn beyond the tokens' own share:
 llama.cpp appends a context checkpoint each turn (up to 32 per slot).
+
+## Concurrent conversations in multiple slots
+
+The same 35B-A3B model with q4_0 KV and two slots of 262,144 tokens each (22.9 GB on the
+RTX 3090), behind llama-swap and the KV-cache proxy. Four conversations, each a ~8.7K-token
+document with its own secret word, every turn asking for it — a slot holding the wrong
+conversation's state would answer wrongly:
+
+- Building all four one after another: each processed from scratch (8.7K tokens,
+  3.2–3.7 s); the third and fourth took the slots of the first two, which were saved
+  first.
+- Resuming them one at a time and in concurrent pairs: every turn restored from its
+  snapshot — 30 tokens processed, 1.2–2.8 s single, 2.0–6.1 s per concurrent pair (the
+  proxy prepares requests one at a time; generation overlaps).
+- After a model unload: two conversations restored from chunks at the same time into
+  different slots, then the other two.
+
+All 20 turns answered with the right secret word, every resumed turn processed only its
+30 new tokens, and slots were assigned freely between turns without crossing states.

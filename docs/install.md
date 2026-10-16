@@ -1,5 +1,20 @@
 # Install
 
+## Platform
+
+**Linux only.** kv-chunk-fs relies on the kernel's FUSE (via go-fuse and `fusermount3`),
+Linux `getxattr`/`setxattr` calls, kernel features negotiated at mount (atomic `O_TRUNC`,
+1 MiB requests, `allow_other` + `default_permissions`), systemd `Type=notify`, and
+Docker's `rslave` bind propagation. macOS (macFUSE) would be a port: other xattr calls,
+no Linux-only mount options, launchd instead of systemd; Windows has no FUSE (WinFsp
+would need a different library). The KV-cache proxy and llama.cpp run anywhere; without
+kv-chunk-fs they save plain files.
+
+`build.sh` produces a static Linux x86-64 binary with no dependencies; FUSE mounting
+needs `fusermount3` (package `fuse3`).
+
+## Build and install
+
 ```sh
 ./build.sh            # vet, unit tests, static build in the golang Docker container
 sudo deploy/install.sh

@@ -60,10 +60,15 @@ reused 248,569 of its 251,773 prompt tokens and processed the rest in 4.4 s.
 Deduplication keeps the disk writes at ~0.2 GB per turn at any size, but the save time
 grows with the whole snapshot (~0.45 GB/s: every byte is chunked and hashed), and a
 proxy that saves while holding its lock makes a follow-up wait that long — up to ~9 s at
-250K. Two remedies need no kv-chunk-fs changes: the
-[local-llm-kv-cache](https://github.com/the-code-foundry/local-llm-kv-cache) fork's
-`kv-save-growth` (skip a save until the conversation has grown by N tokens) and its
-terminal save policy. Snapshots also grow ~0.2 GB per turn beyond the tokens' own share:
+250K. Three remedies need no kv-chunk-fs changes, all in the
+[local-llm-kv-cache](https://github.com/the-code-foundry/local-llm-kv-cache) fork:
+`kv-save-growth` (skip a save until the conversation has grown by N tokens),
+`kv-save-interval` (skip a save until N seconds have passed since the last one; e.g.
+`KV_SAVE_INTERVAL=300` with `KV_SAVE_GROWTH=2000` rewrites the multi-GB file at most
+once per five minutes), and the `terminal` save policy (one save per answer instead of
+one per tool-call round). Skipped saves stay hot in the slot and are persisted by the
+proxy's eviction and shutdown flushes. Snapshots also grow ~0.2 GB per turn beyond the
+tokens' own share:
 llama.cpp appends a context checkpoint each turn (up to 32 per slot).
 
 ## Concurrent conversations in multiple slots
